@@ -3,10 +3,10 @@ import {
   AuthService, 
   SignInDto, 
   SignUpDto, 
-  RefreshTokenDto, 
-  ForgotPasswordDto, 
-  ResetPasswordDto, 
-  VerifyEmailDto 
+  // RefreshTokenDto, 
+  // ForgotPasswordDto, 
+  // ResetPasswordDto, 
+  // VerifyEmailDto 
 } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { UserRole } from '../entities/user.entity';
@@ -31,28 +31,28 @@ export class AuthController {
     return req.user;
   }
 
-  @Post('refresh')
-  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
-    return this.authService.refreshToken(refreshTokenDto);
-  }
+  // @Post('refresh')
+  // async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
+  //   return this.authService.refreshToken(refreshTokenDto);
+  // }
 
-  @Post('forgot-password')
-  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-    return this.authService.forgotPassword(forgotPasswordDto);
-  }
+  // @Post('forgot-password')
+  // async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+  //   return this.authService.forgotPassword(forgotPasswordDto);
+  // }
 
-  @Post('reset-password')
-  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
-    return this.authService.resetPassword(resetPasswordDto);
-  }
+  // @Post('reset-password')
+  // async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+  //   return this.authService.resetPassword(resetPasswordDto);
+  // }
 
-  @Post('verify-email')
-  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
-    return this.authService.verifyEmail(verifyEmailDto);
-  }
+  // @Post('verify-email')
+  // async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
+  //   return this.authService.verifyEmail(verifyEmailDto);
+  // }
 
-  @Post('resend-verification')
-  async resendVerificationEmail(@Query('email') email: string) {
-    return this.authService.resendVerificationEmail(email);
-  }
+  // @Post('resend-verification')
+  // async resendVerificationEmail(@Query('email') email: string) {
+  //   return this.authService.resendVerificationEmail(email);
+  // }
 }

@@ -6,7 +6,15 @@
     "build": "nest build",
     "start": "nest start",
     "dev": "nest start --watch",
-    "prod": "node ."
+    "prod": "node .",
+    "migration:create": "bunx mikro-orm migration:create --config mikro.config.ts",
+    "migration:up": "bunx mikro-orm migration:up --config mikro.config.ts",
+    "migration:down": "bunx mikro-orm migration:down --config mikro.config.ts",
+    "migration:pending": "bunx mikro-orm migration:pending --config mikro.config.ts",
+    "migration:list": "bunx mikro-orm migration:list --config mikro.config.ts",
+    "schema:create": "bunx mikro-orm schema:create --config mikro.config.ts",
+    "schema:drop": "bunx mikro-orm schema:drop --config mikro.config.ts",
+    "schema:update": "bunx mikro-orm schema:update --config mikro.config.ts"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +22,7 @@
   "description": "",
   "dependencies": {
     "@mikro-orm/core": "^6.5.2",
+    "@mikro-orm/migrations": "^6.5.2",
     "@mikro-orm/nestjs": "^6.1.1",
     "@mikro-orm/postgresql": "^6.5.2",
     "@nestjs/common": "^11.1.6",
@@ -27,6 +36,7 @@
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
+    "@mikro-orm/cli": "^6.5.2",
     "@nestjs/cli": "^11.0.10",
     "@nestjs/schematics": "^11.0.7",
     "@types/bcrypt": "^6.0.0",

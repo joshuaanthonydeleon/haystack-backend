@@ -37,12 +37,11 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
     const user = this.userRepository.create({
-      email,
+      email,  
       passwordHash,
       role,
     });
 
-    await this.userRepository.persistAndFlush(user);
     return user;
   }
 

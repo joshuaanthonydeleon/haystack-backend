@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryKey, Property, ManyToOne, Enum } from '@mikro-orm/core';
 import { User } from './user.entity';
 
 export enum TokenType {
@@ -9,31 +9,27 @@ export enum TokenType {
 
 @Entity()
 export class Token {
-  @PrimaryGeneratedColumn()
+  @PrimaryKey()
   id!: number;
 
-  @Column()
+  @Property()
   token!: string;
 
-  @Column({
-    type: 'enum',
-    enum: TokenType,
-  })
+  @Enum(() => TokenType)
   type!: TokenType;
 
-  @Column()
+  @Property()
   expiresAt!: Date;
 
-  @Column({ default: false })
+  @Property({ default: false })
   isUsed!: boolean;
 
   @ManyToOne(() => User)
-  @JoinColumn()
   user!: User;
 
-  @CreateDateColumn()
-  createdAt!: Date;
+  @Property()
+  createdAt: Date = new Date();
 
-  @UpdateDateColumn()
-  updatedAt!: Date;
+  @Property({ onUpdate: () => new Date() })
+  updatedAt: Date = new Date();
 }
