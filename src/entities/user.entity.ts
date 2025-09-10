@@ -20,8 +20,8 @@ export class User {
   @Enum(() => UserRole)
   role!: UserRole;
 
-  // @Property({ default: false })
-  // isEmailVerified!: boolean;
+  @Property({ default: false })
+  isEmailVerified!: boolean;
 
   @OneToMany(() => Token, token => token.user)
   tokens?: Token[] = [];
