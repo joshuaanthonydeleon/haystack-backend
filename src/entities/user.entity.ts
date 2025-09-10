@@ -1,4 +1,5 @@
-import { Entity, PrimaryKey, Property, Enum } from '@mikro-orm/core';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Token } from './token.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -7,21 +8,30 @@ export enum UserRole {
 
 @Entity()
 export class User {
-  @PrimaryKey()
+  @PrimaryGeneratedColumn()
   id!: number;
 
-  @Property({ unique: true })
+  @Column({ unique: true })
   email!: string;
 
-  @Property()
+  @Column()
   passwordHash!: string;
 
-  @Enum(() => UserRole)
+  @Column({
+    type: 'enum',
+    enum: UserRole,
+  })
   role!: UserRole;
 
-  @Property()
-  createdAt = new Date();
+  @Column({ default: false })
+  isEmailVerified!: boolean;
 
-  @Property({ onUpdate: () => new Date() })
-  updatedAt = new Date();
+  @OneToMany(() => Token, token => token.user)
+  tokens!: Token[];
+
+  @CreateDateColumn()
+  createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
 }
