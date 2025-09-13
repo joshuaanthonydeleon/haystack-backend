@@ -10,8 +10,8 @@ export class Vendor {
   @Property({ unique: true })
   companyName!: string;
 
-  @Property({ unique: true })
-  website!: string;
+  @Property({ unique: true, nullable: true })
+  website?: string;
 
   @Property({ default: true })
   isActive!: boolean;
@@ -23,8 +23,8 @@ export class Vendor {
   users?: User[] = [];
 
   @Property({ onCreate: () => new Date() })
-  createdAt!: Date;
+  createdAt?: Date;
 
   @Property({ onCreate: () => new Date(), onUpdate: () => new Date() })
-  updatedAt!: Date;
+  updatedAt?: Date;
 }

@@ -39,22 +39,22 @@ export class User {
   @Property()
   country!: string;
 
-  @Property()
+  @Property({ nullable: true })
   website?: string;
 
-  @Property()
+  @Property({ nullable: true })
   linkedinProfile?: string;
 
-  @Property()
+  @Property({ nullable: true })
   facebookProfile?: string;
 
-  @Property()
+  @Property({ nullable: true })
   twitterProfile?: string;
 
-  @Property()
+  @Property({ nullable: true })
   instagramProfile?: string;
 
-  @Property()
+  @Property({ nullable: true })
   youtubeProfile?: string;
 
   @Property()

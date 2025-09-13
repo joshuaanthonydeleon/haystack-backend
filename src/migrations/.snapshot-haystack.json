@@ -224,7 +224,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "length": 255,
           "mappedType": "string"
         },
@@ -438,7 +438,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "length": 255,
           "mappedType": "string"
         },
@@ -448,7 +448,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "length": 255,
           "mappedType": "string"
         },
@@ -458,7 +458,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "length": 255,
           "mappedType": "string"
         },
@@ -468,7 +468,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "length": 255,
           "mappedType": "string"
         },
@@ -478,7 +478,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "length": 255,
           "mappedType": "string"
         },
@@ -488,7 +488,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "length": 255,
           "mappedType": "string"
         },
