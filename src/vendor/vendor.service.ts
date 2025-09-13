@@ -90,8 +90,8 @@ export class VendorService {
       vendor.website = data['Official Website'];
     }
 
-    vendor = this.vendorRepository.create(vendor);
-    await this.em.persistAndFlush(vendor);
+    // Persist vendor (create or update)
+    this.em.persist(vendor);
 
     // Handle vendor profile
     let profile = await this.vendorProfileRepository.findOne({ vendor });
@@ -119,8 +119,11 @@ export class VendorService {
     profile.lastVerified = data['Last Verified (UTC)'] ? new Date(data['Last Verified (UTC)']) : undefined;
     profile.notes = data.Notes || undefined;
 
-    profile = this.vendorProfileRepository.create(profile);
-    await this.em.persistAndFlush(profile);
+    // Persist profile (create or update)
+    this.em.persist(profile);
+
+    // Flush all changes at once
+    await this.em.flush();
   }
 
   private mapCategory(categoryString: string): VendorCategory | undefined {
