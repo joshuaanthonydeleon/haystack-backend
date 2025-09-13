@@ -2,8 +2,6 @@ import { PostgreSqlDriver, defineConfig } from "@mikro-orm/postgresql";
 import { Migrator } from "@mikro-orm/migrations";
 import { Token } from "src/entities/token.entity";
 import { User } from "src/entities/user.entity";
-import { Vendor } from "src/entities/vendor.entity";
-import { VendorProfile } from "src/entities/vendor-profile.entity";
 
 export default defineConfig({
   // contextName: 'app',
@@ -18,9 +16,9 @@ export default defineConfig({
     pathTs: './src/migrations',
     transactional: true,
   },
-  // entities: ['./dist/entities'],
-  // entitiesTs: [User, Token],
-  entities: [User, Token, Vendor, VendorProfile],
+  entities: ['./dist/entities'],
+  entitiesTs: ['src/entities'],
+  // entities: [User, Token],
   dbName: 'haystack',
   driver: PostgreSqlDriver
 });

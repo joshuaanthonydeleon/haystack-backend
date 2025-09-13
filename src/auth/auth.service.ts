@@ -18,6 +18,14 @@ export interface SignUpDto {
   email: string;
   password: string;
   role: UserRole;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
 }
 
 export interface RefreshTokenDto {
@@ -47,11 +55,11 @@ export class AuthService {
     private readonly em: EntityManager,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
-  ) {}
+  ) { }
 
-  async signUp(signUpDto: SignUpDto): Promise<{ user: User; message: string }> {
-    const { email, password, role } = signUpDto;
-    
+  async signUp(signUpDto: SignUpDto): Promise<{ access_token: string; refresh_token: string; user: Omit<User, 'passwordHash'>; message: string }> {
+    const { email, password, role, firstName, lastName, phone, address, city, state, zip, country } = signUpDto;
+
     const existingUser = await this.userRepository.findOne({ email });
     if (existingUser) {
       throw new UnauthorizedException('User already exists');
@@ -61,29 +69,47 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
     const user = this.userRepository.create({
-      email,  
+      email,
+      firstName,
+      lastName,
+      phone,
+      address,
+      city,
+      state,
+      zip,
+      country,
       passwordHash,
       role,
-      isEmailVerified: false,
+      isEmailVerified: true, // Skip email verification for now
     });
 
     await this.em.persistAndFlush(user);
 
-    // Generate email verification token
-    const verificationToken = await this.generateToken(user.id, TokenType.EMAIL_VERIFICATION);
-    
-    // Send verification email
-    await this.emailService.sendVerificationEmail(email, verificationToken.token);
+    // Generate JWT tokens for immediate authentication
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const access_token = this.jwtService.sign(payload);
+
+    // Generate refresh token
+    const refreshToken = await this.generateToken(user.id, TokenType.REFRESH);
+
+    const { passwordHash: _, ...userWithoutPassword } = user;
 
     return {
-      user,
-      message: 'User created successfully. Please check your email to verify your account.'
+      access_token,
+      refresh_token: refreshToken.token,
+      user: userWithoutPassword,
+      message: 'Account created successfully! You are now signed in.'
     };
   }
 
   async signIn(signInDto: SignInDto): Promise<{ access_token: string; refresh_token: string; user: Omit<User, 'passwordHash'> }> {
     const { email, password } = signInDto;
-    
+
     const user = await this.userRepository.findOne({ email });
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -101,7 +127,7 @@ export class AuthService {
     };
 
     const access_token = this.jwtService.sign(payload);
-    
+
     // Generate refresh token
     const refreshToken = await this.generateToken(user.id, TokenType.REFRESH);
 
@@ -116,7 +142,7 @@ export class AuthService {
 
   async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<{ access_token: string; refresh_token: string }> {
     const { refreshToken } = refreshTokenDto;
-    
+
     // Find the refresh token
     const token = await this.tokenRepository.findOne({
       token: refreshToken,
@@ -136,10 +162,10 @@ export class AuthService {
     };
 
     const access_token = this.jwtService.sign(payload);
-    
+
     // Generate new refresh token
     const newRefreshToken = await this.generateToken(token.user.id, TokenType.REFRESH);
-    
+
     // Mark old refresh token as used
     token.isUsed = true;
     await this.em.persistAndFlush(token);
@@ -152,7 +178,7 @@ export class AuthService {
 
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto): Promise<{ message: string }> {
     const { email } = forgotPasswordDto;
-    
+
     const user = await this.userRepository.findOne({ email });
     if (!user) {
       // Don't reveal if user exists or not for security
@@ -161,7 +187,7 @@ export class AuthService {
 
     // Generate password reset token
     const resetToken = await this.generateToken(user.id, TokenType.PASSWORD_RESET);
-    
+
     // Send password reset email
     await this.emailService.sendPasswordResetEmail(email, resetToken.token);
 
@@ -170,7 +196,7 @@ export class AuthService {
 
   async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
     const { token, newPassword } = resetPasswordDto;
-    
+
     // Find the password reset token
     const resetToken = await this.tokenRepository.findOne({
       token,
@@ -199,7 +225,7 @@ export class AuthService {
 
   async verifyEmail(verifyEmailDto: VerifyEmailDto): Promise<{ message: string }> {
     const { token } = verifyEmailDto;
-    
+
     // Find the email verification token
     const verificationToken = await this.tokenRepository.findOne({
       token,
@@ -234,7 +260,7 @@ export class AuthService {
 
     // Generate new email verification token
     const verificationToken = await this.generateToken(user.id, TokenType.EMAIL_VERIFICATION);
-    
+
     // Send verification email
     await this.emailService.sendVerificationEmail(email, verificationToken.token);
 
@@ -244,7 +270,7 @@ export class AuthService {
   private async generateToken(userId: number, type: TokenType): Promise<Token> {
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date();
-    
+
     // Set expiration based on token type
     switch (type) {
       case TokenType.REFRESH:

@@ -1,5 +1,6 @@
-import { Entity, PrimaryKey, Property, OneToMany, Enum } from '@mikro-orm/core';
+import { Entity, PrimaryKey, Property, OneToMany, ManyToOne, Enum } from '@mikro-orm/core';
 import { Token } from './token.entity';
+import { Vendor } from './vendor.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -15,6 +16,48 @@ export class User {
   email!: string;
 
   @Property()
+  firstName!: string;
+
+  @Property()
+  lastName!: string;
+
+  @Property()
+  phone!: string;
+
+  @Property()
+  address!: string;
+
+  @Property()
+  city!: string;
+
+  @Property()
+  state!: string;
+
+  @Property()
+  zip!: string;
+
+  @Property()
+  country!: string;
+
+  @Property()
+  website?: string;
+
+  @Property()
+  linkedinProfile?: string;
+
+  @Property()
+  facebookProfile?: string;
+
+  @Property()
+  twitterProfile?: string;
+
+  @Property()
+  instagramProfile?: string;
+
+  @Property()
+  youtubeProfile?: string;
+
+  @Property()
   passwordHash!: string;
 
   @Enum(() => UserRole)
@@ -25,6 +68,9 @@ export class User {
 
   @OneToMany(() => Token, token => token.user)
   tokens?: Token[] = [];
+
+  @ManyToOne(() => Vendor, { nullable: true })
+  vendor?: Vendor;
 
   @Property({ onCreate: () => new Date() })
   createdAt?: Date;
