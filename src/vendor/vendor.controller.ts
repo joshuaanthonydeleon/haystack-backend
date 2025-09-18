@@ -6,7 +6,10 @@ import {
   UseInterceptors, 
   UploadedFile, 
   BadRequestException,
-  UseGuards
+  UseGuards,
+  Query,
+  Body,
+  Put
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { VendorService } from './vendor.service';
@@ -51,8 +54,28 @@ export class VendorController {
     return this.vendorService.getAllVendors();
   }
 
+  @Get('search')
+  @Roles(UserRole.ADMIN, UserRole.VENDOR, UserRole.BANK)
+  async searchVendors(
+    @Query('q') query?: string,
+    @Query('category') category?: string,
+    @Query('size') size?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string
+  ) {
+    const searchParams = {
+      q: query,
+      category,
+      size,
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 10
+    };
+    
+    return this.vendorService.searchVendors(searchParams);
+  }
+
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.VENDOR)
+  @Roles(UserRole.ADMIN, UserRole.VENDOR, UserRole.BANK)
   async getVendorById(@Param('id') id: string) {
     const vendorId = parseInt(id, 10);
     if (isNaN(vendorId)) {
@@ -65,5 +88,44 @@ export class VendorController {
     }
     
     return vendor;
+  }
+
+  @Get(':id/ratings')
+  @Roles(UserRole.ADMIN, UserRole.VENDOR, UserRole.BANK)
+  async getVendorRatings(@Param('id') id: string) {
+    const vendorId = parseInt(id, 10);
+    if (isNaN(vendorId)) {
+      throw new BadRequestException('Invalid vendor ID');
+    }
+    
+    return this.vendorService.getVendorRatings(vendorId);
+  }
+
+  @Post(':id/ratings')
+  @Roles(UserRole.BANK)
+  async createRating(
+    @Param('id') id: string,
+    @Body() ratingData: any
+  ) {
+    const vendorId = parseInt(id, 10);
+    if (isNaN(vendorId)) {
+      throw new BadRequestException('Invalid vendor ID');
+    }
+    
+    return this.vendorService.createRating(vendorId, ratingData);
+  }
+
+  @Put(':id')
+  @Roles(UserRole.ADMIN, UserRole.VENDOR)
+  async updateVendor(
+    @Param('id') id: string,
+    @Body() updateData: any
+  ) {
+    const vendorId = parseInt(id, 10);
+    if (isNaN(vendorId)) {
+      throw new BadRequestException('Invalid vendor ID');
+    }
+    
+    return this.vendorService.updateVendor(vendorId, updateData);
   }
 }

@@ -1,6 +1,7 @@
 import { Entity, PrimaryKey, Property, OneToOne, OneToMany } from '@mikro-orm/core';
 import { VendorProfile } from './vendor-profile.entity';
 import { User } from './user.entity';
+import { Rating } from './rating.entity';
 
 @Entity()
 export class Vendor {
@@ -21,6 +22,12 @@ export class Vendor {
 
   @OneToMany(() => User, user => user.vendor)
   users?: User[] = [];
+
+  @OneToMany(() => Rating, rating => rating.vendor)
+  ratings?: Rating[] = [];
+
+  @Property({ type: 'datetime', nullable: true })
+  claimedAt?: Date;
 
   @Property({ onCreate: () => new Date() })
   createdAt?: Date;

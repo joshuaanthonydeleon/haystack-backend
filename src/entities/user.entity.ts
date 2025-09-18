@@ -5,6 +5,7 @@ import { Vendor } from './vendor.entity';
 export enum UserRole {
   ADMIN = 'admin',
   VENDOR = 'vendor',
+  BANK = 'bank',
 }
 
 @Entity()
