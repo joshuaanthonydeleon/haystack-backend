@@ -80,15 +80,6 @@ export class VendorProfile {
   compatibility?: number;
 
   @Property({ type: 'text', nullable: true })
-  description?: string;
-
-  @Property({ type: 'text', nullable: true })
-  longDescription?: string;
-
-  @Property({ type: 'text', nullable: true })
-  website?: string;
-
-  @Property({ type: 'text', nullable: true })
   phone?: string;
 
   @Property({ type: 'text', nullable: true })

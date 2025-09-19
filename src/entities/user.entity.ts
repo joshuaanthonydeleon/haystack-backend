@@ -61,6 +61,13 @@ export class User {
   @Property()
   passwordHash!: string;
 
+  @Property({ nullable: true })
+  institutionName?: string;
+
+  @Property({ nullable: true })
+  title?: string;
+
+
   @Enum(() => UserRole)
   role!: UserRole;
 

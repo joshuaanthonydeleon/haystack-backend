@@ -127,33 +127,6 @@
           "nullable": true,
           "mappedType": "integer"
         },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "text"
-        },
-        "long_description": {
-          "name": "long_description",
-          "type": "text",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "text"
-        },
-        "website": {
-          "name": "website",
-          "type": "text",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "text"
-        },
         "phone": {
           "name": "phone",
           "type": "text",
@@ -744,6 +717,26 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "length": 255,
+          "mappedType": "string"
+        },
+        "institution_name": {
+          "name": "institution_name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 255,
+          "mappedType": "string"
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
           "length": 255,
           "mappedType": "string"
         },

@@ -204,6 +204,9 @@ export class VendorService {
       }
     );
 
+    console.log('vendors', vendors)
+    console.log('total', total)
+
     // If there's a search query, filter the results
     let filteredVendors = vendors;
     if (q) {
@@ -214,7 +217,7 @@ export class VendorService {
 
         return (
           vendor.companyName.toLowerCase().includes(query) ||
-          (profile.description && profile.description.toLowerCase().includes(query)) ||
+          (profile.summary && profile.summary.toLowerCase().includes(query)) ||
           (profile.tags && profile.tags.some(tag => tag.toLowerCase().includes(query)))
         );
       });
