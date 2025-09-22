@@ -5,6 +5,7 @@ import { User } from "src/entities/user.entity";
 import { Vendor } from "src/entities/vendor.entity";
 import { VendorProfile } from "src/entities/vendor-profile.entity";
 import { Rating } from "src/entities/rating.entity";
+import { VendorResearch } from "src/entities/vendor-research.entity";
 
 export default defineConfig({
   // contextName: 'app',
@@ -21,7 +22,7 @@ export default defineConfig({
   },
   // entities: ['./dist/entities'],
   // entitiesTs: [User, Token],
-  entities: [User, Token, Vendor, VendorProfile, Rating],
+  entities: [User, Token, Vendor, VendorProfile, Rating, VendorResearch],
   dbName: 'haystack',
   driver: PostgreSqlDriver
 });

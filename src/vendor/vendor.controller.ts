@@ -1,18 +1,20 @@
-import { 
-  Controller, 
-  Post, 
-  Get, 
-  Param, 
-  UseInterceptors, 
-  UploadedFile, 
+import {
   BadRequestException,
-  UseGuards,
-  Query,
   Body,
-  Put
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { VendorService } from './vendor.service';
+import { VendorResearchService } from './vendor-research.service';
+import { VendorResearchQueue } from './vendor-research.queue';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -21,7 +23,11 @@ import { UserRole } from '../entities/user.entity';
 @Controller('vendor')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class VendorController {
-  constructor(private readonly vendorService: VendorService) {}
+  constructor(
+    private readonly vendorService: VendorService,
+    private readonly vendorResearchService: VendorResearchService,
+    private readonly vendorResearchQueue: VendorResearchQueue,
+  ) {}
 
   @Post('upload-csv')
   @UseInterceptors(FileInterceptor('file'))
@@ -125,7 +131,50 @@ export class VendorController {
     if (isNaN(vendorId)) {
       throw new BadRequestException('Invalid vendor ID');
     }
-    
+
     return this.vendorService.updateVendor(vendorId, updateData);
+  }
+
+  @Post(':id/research')
+  @Roles(UserRole.ADMIN)
+  async requestVendorResearch(@Param('id') id: string) {
+    const vendorId = parseInt(id, 10)
+    if (Number.isNaN(vendorId)) {
+      throw new BadRequestException('Invalid vendor ID')
+    }
+
+    const research = await this.vendorResearchService.createResearchRequest(vendorId)
+    await this.vendorResearchQueue.enqueue(research.id)
+
+    return research
+  }
+
+  @Get(':id/research')
+  @Roles(UserRole.ADMIN)
+  async listVendorResearch(@Param('id') id: string) {
+    const vendorId = parseInt(id, 10)
+    if (Number.isNaN(vendorId)) {
+      throw new BadRequestException('Invalid vendor ID')
+    }
+
+    return this.vendorResearchService.listResearchForVendor(vendorId)
+  }
+
+  @Get(':id/research/:researchId')
+  @Roles(UserRole.ADMIN)
+  async getVendorResearch(@Param('id') id: string, @Param('researchId') researchId: string) {
+    const vendorId = parseInt(id, 10)
+    const parsedResearchId = parseInt(researchId, 10)
+
+    if (Number.isNaN(vendorId) || Number.isNaN(parsedResearchId)) {
+      throw new BadRequestException('Invalid identifiers provided')
+    }
+
+    const research = await this.vendorResearchService.getResearchById(parsedResearchId)
+    if (research.vendor.id !== vendorId) {
+      throw new BadRequestException('Research record does not belong to the requested vendor')
+    }
+
+    return research
   }
 }
