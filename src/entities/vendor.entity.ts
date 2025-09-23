@@ -2,6 +2,10 @@ import { Entity, PrimaryKey, Property, OneToOne, OneToMany } from '@mikro-orm/co
 import { VendorProfile } from './vendor-profile.entity';
 import { User } from './user.entity';
 import { Rating } from './rating.entity';
+import { DemoRequest } from './demo-request.entity';
+import { ComplianceDocument } from './compliance-document.entity';
+import { VendorClaim } from './vendor-claim.entity';
+import { VendorSubscription } from './vendor-subscription.entity';
 
 @Entity()
 export class Vendor {
@@ -25,6 +29,18 @@ export class Vendor {
 
   @OneToMany(() => Rating, rating => rating.vendor)
   ratings?: Rating[] = [];
+
+  @OneToMany(() => DemoRequest, demoRequest => demoRequest.vendor)
+  demoRequests?: DemoRequest[] = [];
+
+  @OneToMany(() => ComplianceDocument, document => document.vendor)
+  complianceDocuments?: ComplianceDocument[] = [];
+
+  @OneToMany(() => VendorClaim, claim => claim.vendor)
+  vendorClaims?: VendorClaim[] = [];
+
+  @OneToMany(() => VendorSubscription, subscription => subscription.vendor)
+  subscriptions?: VendorSubscription[] = [];
 
   @Property({ type: 'datetime', nullable: true })
   claimedAt?: Date;
