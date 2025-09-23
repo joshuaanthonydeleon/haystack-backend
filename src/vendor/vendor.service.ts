@@ -204,9 +204,6 @@ export class VendorService {
       }
     );
 
-    console.log('vendors', vendors)
-    console.log('total', total)
-
     // If there's a search query, filter the results
     let filteredVendors = vendors;
     if (q) {
