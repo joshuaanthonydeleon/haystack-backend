@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityManager, EntityRepository } from '@mikro-orm/core';
 import { VendorClaim, VendorClaimStatus } from '../entities/vendor-claim.entity';
@@ -9,6 +9,8 @@ import { DecideVendorClaimDto } from './dto/decide-vendor-claim.dto';
 
 @Injectable()
 export class VendorClaimService {
+  private readonly logger = new Logger(VendorClaimService.name)
+
   constructor(
     @InjectRepository(VendorClaim)
     private readonly vendorClaimRepository: EntityRepository<VendorClaim>,
@@ -17,7 +19,7 @@ export class VendorClaimService {
     @InjectRepository(User)
     private readonly userRepository: EntityRepository<User>,
     private readonly em: EntityManager,
-  ) {}
+  ) { }
 
   async submitClaim(userId: number, vendorId: number, dto: CreateVendorClaimDto): Promise<VendorClaim> {
     const [vendor, user] = await Promise.all([
@@ -46,6 +48,7 @@ export class VendorClaimService {
 
   async listClaims(currentUser: { userId: number; role: UserRole }): Promise<VendorClaim[]> {
     if (currentUser.role === UserRole.ADMIN) {
+      this.logger.log('Listing all claims as admin');
       return this.vendorClaimRepository.find({}, {
         populate: ['vendor', 'user', 'reviewedBy'],
         orderBy: { submittedAt: 'DESC' },
@@ -53,6 +56,7 @@ export class VendorClaimService {
     }
 
     if (currentUser.role === UserRole.VENDOR) {
+      this.logger.log('Listing claims as vendor');
       const user = await this.userRepository.findOne(currentUser.userId, { populate: ['vendor'] });
       if (!user?.vendor) {
         throw new ForbiddenException('Vendor account not linked');

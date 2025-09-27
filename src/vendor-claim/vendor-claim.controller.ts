@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Logger, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { VendorClaimService } from './vendor-claim.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -10,7 +10,9 @@ import { DecideVendorClaimDto } from './dto/decide-vendor-claim.dto';
 @Controller()
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class VendorClaimController {
-  constructor(private readonly vendorClaimService: VendorClaimService) {}
+  private readonly logger = new Logger(VendorClaimController.name)
+
+  constructor(private readonly vendorClaimService: VendorClaimService) { }
 
   @Post('vendor/:vendorId/claims')
   @Roles(UserRole.VENDOR, UserRole.ADMIN)
@@ -30,6 +32,7 @@ export class VendorClaimController {
   @Get('vendor/claims')
   @Roles(UserRole.ADMIN, UserRole.VENDOR)
   async listClaims(@Req() req: any) {
+    this.logger.log('Listing claims');
     return this.vendorClaimService.listClaims(req.user);
   }
 

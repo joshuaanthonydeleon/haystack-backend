@@ -27,7 +27,7 @@ export class VendorController {
     private readonly vendorService: VendorService,
     private readonly vendorResearchService: VendorResearchService,
     private readonly vendorResearchQueue: VendorResearchQueue,
-  ) {}
+  ) { }
 
   @Post('upload-csv')
   @UseInterceptors(FileInterceptor('file'))
@@ -76,25 +76,10 @@ export class VendorController {
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 10
     };
-    
+
     return this.vendorService.searchVendors(searchParams);
   }
 
-  @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.VENDOR, UserRole.BANK)
-  async getVendorById(@Param('id') id: string) {
-    const vendorId = parseInt(id, 10);
-    if (isNaN(vendorId)) {
-      throw new BadRequestException('Invalid vendor ID');
-    }
-    
-    const vendor = await this.vendorService.getVendorById(vendorId);
-    if (!vendor) {
-      throw new BadRequestException('Vendor not found');
-    }
-    
-    return vendor;
-  }
 
   @Get(':id/ratings')
   @Roles(UserRole.ADMIN, UserRole.VENDOR, UserRole.BANK)
@@ -103,7 +88,7 @@ export class VendorController {
     if (isNaN(vendorId)) {
       throw new BadRequestException('Invalid vendor ID');
     }
-    
+
     return this.vendorService.getVendorRatings(vendorId);
   }
 
@@ -117,7 +102,7 @@ export class VendorController {
     if (isNaN(vendorId)) {
       throw new BadRequestException('Invalid vendor ID');
     }
-    
+
     return this.vendorService.createRating(vendorId, ratingData);
   }
 
@@ -176,5 +161,21 @@ export class VendorController {
     }
 
     return research
+  }
+
+  @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.VENDOR, UserRole.BANK)
+  async getVendorById(@Param('id') id: string) {
+    const vendorId = parseInt(id, 10);
+    if (isNaN(vendorId)) {
+      throw new BadRequestException('Invalid vendor ID');
+    }
+
+    const vendor = await this.vendorService.getVendorById(vendorId);
+    if (!vendor) {
+      throw new BadRequestException('Vendor not found');
+    }
+
+    return vendor;
   }
 }
