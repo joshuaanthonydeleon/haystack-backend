@@ -2,10 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityManager, EntityRepository } from '@mikro-orm/core';
 import { Vendor } from '../entities/vendor.entity';
-import { VendorProfile, VendorCategory, VendorSize } from '../entities/vendor-profile.entity';
+import { VendorProfile, VendorCategory, VendorSize, VerificationStatus } from '../entities/vendor-profile.entity';
 import { Rating } from '../entities/rating.entity';
 import * as csv from 'csv-parser';
 import { Readable } from 'stream';
+import { VendorClaim } from 'src/entities/vendor-claim.entity';
 
 export interface CsvVendorData {
   Company: string;
@@ -289,6 +290,22 @@ export class VendorService {
 
     this.em.persist(vendor);
     await this.em.flush();
+
+    return vendor;
+  }
+
+  async listVerificationRequests(): Promise<Vendor[]> {
+    return this.vendorRepository.findAll({ populate: ['profile'], where: { profile: { verificationStatus: VerificationStatus.PENDING } } });
+  }
+
+  async verifyVendor(id: number): Promise<Vendor> {
+    const vendor = await this.vendorRepository.findOne(id, { populate: ['profile'] });
+    if (!vendor || !vendor.profile) {
+      throw new Error('Vendor not found');
+    }
+
+    vendor.profile.verificationStatus = VerificationStatus.VERIFIED;
+    await this.em.persistAndFlush(vendor);
 
     return vendor;
   }

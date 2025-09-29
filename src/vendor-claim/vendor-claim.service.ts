@@ -47,6 +47,8 @@ export class VendorClaimService {
   }
 
   async listClaims(currentUser: { userId: number; role: UserRole }): Promise<VendorClaim[]> {
+    this.logger.log('Listing claims', currentUser);
+
     if (currentUser.role === UserRole.ADMIN) {
       this.logger.log('Listing all claims as admin');
       return this.vendorClaimRepository.find({}, {

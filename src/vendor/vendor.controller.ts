@@ -10,6 +10,9 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  Req,
+  Logger,
+  UsePipes,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { VendorService } from './vendor.service';
@@ -19,15 +22,69 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../entities/user.entity';
+import { VendorClaimService } from 'src/vendor-claim/vendor-claim.service';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import {
+  CreateVendorClaimSchema,
+  DecideVendorClaimSchema,
+  VendorSearchSchema,
+  CreateRatingSchema,
+  UpdateVendorSchema,
+  VendorIdParamSchema,
+  ClaimIdParamSchema,
+  ResearchIdParamSchema,
+  CreateVendorClaimDto,
+  DecideVendorClaimDto,
+  VendorSearchDto,
+  CreateRatingDto,
+  UpdateVendorDto,
+  VendorIdParam,
+  ClaimIdParam,
+  ResearchIdParam,
+} from './dto/vendor.validation';
+import { GetUser, UserDecorator } from 'src/common/decorators/user.decorator';
 
 @Controller('vendor')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class VendorController {
+  private readonly logger: Logger = new Logger(VendorController.name);
+
   constructor(
     private readonly vendorService: VendorService,
     private readonly vendorResearchService: VendorResearchService,
     private readonly vendorResearchQueue: VendorResearchQueue,
+    private readonly vendorClaimService: VendorClaimService,
   ) { }
+
+  @Get('verification-requests')
+  @Roles(UserRole.ADMIN)
+  async listVerificationRequests() {
+    return this.vendorService.listVerificationRequests();
+  }
+
+  @Post('verification-requests/:id/verify')
+  @Roles(UserRole.ADMIN)
+  @UsePipes(new ZodValidationPipe(VendorIdParamSchema))
+  async verifyVendor(@Param() params: VendorIdParam) {
+    return this.vendorService.verifyVendor(params.id);
+  }
+
+  @Get('claims')
+  @Roles(UserRole.ADMIN, UserRole.VENDOR)
+  async listClaims(@Req() req: any) {
+    return this.vendorClaimService.listClaims(req.user);
+  }
+
+  @Post('claims/:claimId/decision')
+  @Roles(UserRole.ADMIN)
+  @UsePipes(new ZodValidationPipe(DecideVendorClaimSchema))
+  async decideClaim(
+    @GetUser() user: UserDecorator,
+    @Param() params: ClaimIdParam,
+    @Body() body: DecideVendorClaimDto,
+  ) {
+    return this.vendorClaimService.decideClaim(user, params.claimId, body);
+  }
 
   @Post('upload-csv')
   @UseInterceptors(FileInterceptor('file'))
@@ -62,73 +119,44 @@ export class VendorController {
 
   @Get('search')
   @Roles(UserRole.ADMIN, UserRole.VENDOR, UserRole.BANK)
-  async searchVendors(
-    @Query('q') query?: string,
-    @Query('category') category?: string,
-    @Query('size') size?: string,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string
-  ) {
-    const searchParams = {
-      q: query,
-      category,
-      size,
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 10
-    };
-
+  @UsePipes(new ZodValidationPipe(VendorSearchSchema))
+  async searchVendors(@Query() searchParams: VendorSearchDto) {
     return this.vendorService.searchVendors(searchParams);
   }
 
 
   @Get(':id/ratings')
   @Roles(UserRole.ADMIN, UserRole.VENDOR, UserRole.BANK)
-  async getVendorRatings(@Param('id') id: string) {
-    const vendorId = parseInt(id, 10);
-    if (isNaN(vendorId)) {
-      throw new BadRequestException('Invalid vendor ID');
-    }
-
-    return this.vendorService.getVendorRatings(vendorId);
+  @UsePipes(new ZodValidationPipe(VendorIdParamSchema))
+  async getVendorRatings(@Param() params: VendorIdParam) {
+    return this.vendorService.getVendorRatings(params.id);
   }
 
   @Post(':id/ratings')
   @Roles(UserRole.BANK)
+  @UsePipes(new ZodValidationPipe(CreateRatingSchema))
   async createRating(
-    @Param('id') id: string,
-    @Body() ratingData: any
+    @Param() params: VendorIdParam,
+    @Body() ratingData: CreateRatingDto
   ) {
-    const vendorId = parseInt(id, 10);
-    if (isNaN(vendorId)) {
-      throw new BadRequestException('Invalid vendor ID');
-    }
-
-    return this.vendorService.createRating(vendorId, ratingData);
+    return this.vendorService.createRating(params.id, ratingData);
   }
 
   @Put(':id')
   @Roles(UserRole.ADMIN, UserRole.VENDOR)
+  @UsePipes(new ZodValidationPipe(UpdateVendorSchema))
   async updateVendor(
-    @Param('id') id: string,
-    @Body() updateData: any
+    @Param() params: VendorIdParam,
+    @Body() updateData: UpdateVendorDto
   ) {
-    const vendorId = parseInt(id, 10);
-    if (isNaN(vendorId)) {
-      throw new BadRequestException('Invalid vendor ID');
-    }
-
-    return this.vendorService.updateVendor(vendorId, updateData);
+    return this.vendorService.updateVendor(params.id, updateData);
   }
 
   @Post(':id/research')
   @Roles(UserRole.ADMIN)
-  async requestVendorResearch(@Param('id') id: string) {
-    const vendorId = parseInt(id, 10)
-    if (Number.isNaN(vendorId)) {
-      throw new BadRequestException('Invalid vendor ID')
-    }
-
-    const research = await this.vendorResearchService.createResearchRequest(vendorId)
+  @UsePipes(new ZodValidationPipe(VendorIdParamSchema))
+  async requestVendorResearch(@Param() params: VendorIdParam) {
+    const research = await this.vendorResearchService.createResearchRequest(params.id)
     await this.vendorResearchQueue.enqueue(research.id)
 
     return research
@@ -136,27 +164,17 @@ export class VendorController {
 
   @Get(':id/research')
   @Roles(UserRole.ADMIN)
-  async listVendorResearch(@Param('id') id: string) {
-    const vendorId = parseInt(id, 10)
-    if (Number.isNaN(vendorId)) {
-      throw new BadRequestException('Invalid vendor ID')
-    }
-
-    return this.vendorResearchService.listResearchForVendor(vendorId)
+  @UsePipes(new ZodValidationPipe(VendorIdParamSchema))
+  async listVendorResearch(@Param() params: VendorIdParam) {
+    return this.vendorResearchService.listResearchForVendor(params.id)
   }
 
   @Get(':id/research/:researchId')
   @Roles(UserRole.ADMIN)
-  async getVendorResearch(@Param('id') id: string, @Param('researchId') researchId: string) {
-    const vendorId = parseInt(id, 10)
-    const parsedResearchId = parseInt(researchId, 10)
-
-    if (Number.isNaN(vendorId) || Number.isNaN(parsedResearchId)) {
-      throw new BadRequestException('Invalid identifiers provided')
-    }
-
-    const research = await this.vendorResearchService.getResearchById(parsedResearchId)
-    if (research.vendor.id !== vendorId) {
+  @UsePipes(new ZodValidationPipe(ResearchIdParamSchema))
+  async getVendorResearch(@Param() params: ResearchIdParam) {
+    const research = await this.vendorResearchService.getResearchById(params.researchId)
+    if (research.vendor.id !== params.id) {
       throw new BadRequestException('Research record does not belong to the requested vendor')
     }
 
@@ -165,17 +183,24 @@ export class VendorController {
 
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.VENDOR, UserRole.BANK)
-  async getVendorById(@Param('id') id: string) {
-    const vendorId = parseInt(id, 10);
-    if (isNaN(vendorId)) {
-      throw new BadRequestException('Invalid vendor ID');
-    }
-
-    const vendor = await this.vendorService.getVendorById(vendorId);
+  @UsePipes(new ZodValidationPipe(VendorIdParamSchema))
+  async getVendorById(@Param() params: VendorIdParam) {
+    const vendor = await this.vendorService.getVendorById(params.id);
     if (!vendor) {
       throw new BadRequestException('Vendor not found');
     }
 
     return vendor;
+  }
+
+  @Post(':id/claims')
+  @Roles(UserRole.VENDOR, UserRole.ADMIN)
+  @UsePipes(new ZodValidationPipe(CreateVendorClaimSchema))
+  async submitClaim(
+    @GetUser() user: UserDecorator,
+    @Param() params: VendorIdParam,
+    @Body() body: CreateVendorClaimDto,
+  ) {
+    return this.vendorClaimService.submitClaim(user.userId, params.id, body);
   }
 }

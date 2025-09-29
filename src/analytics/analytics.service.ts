@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
 import { Vendor } from '../entities/vendor.entity';
@@ -18,6 +18,8 @@ export interface GrowthMetrics {
 
 @Injectable()
 export class AnalyticsService {
+  private readonly logger = new Logger(AnalyticsService.name)
+
   constructor(
     @InjectRepository(Vendor)
     private readonly vendorRepository: EntityRepository<Vendor>,
@@ -35,7 +37,7 @@ export class AnalyticsService {
     private readonly complianceDocumentRepository: EntityRepository<ComplianceDocument>,
     @InjectRepository(VendorClaim)
     private readonly vendorClaimRepository: EntityRepository<VendorClaim>,
-  ) {}
+  ) { }
 
   private calculateGrowth(current: number, previous: number): number {
     if (previous === 0) {
@@ -101,6 +103,8 @@ export class AnalyticsService {
       .map(([category, count]) => ({ category, count, growth: 0 }));
 
     const growth = await this.buildMonthlyGrowth();
+
+    this.logger.log('claims', claims)
 
     const recentActivity = [
       ...demoRequests.map((request) => ({

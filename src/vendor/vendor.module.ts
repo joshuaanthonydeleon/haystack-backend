@@ -8,13 +8,15 @@ import { Rating } from '../entities/rating.entity';
 import { VendorResearch } from '../entities/vendor-research.entity';
 import { VendorResearchService } from './vendor-research.service';
 import { VendorResearchQueue } from './vendor-research.queue';
+import { VendorClaimModule } from 'src/vendor-claim/vendor-claim.module';
 
 @Module({
   imports: [
-    MikroOrmModule.forFeature([Vendor, VendorProfile, Rating, VendorResearch])
+    MikroOrmModule.forFeature([Vendor, VendorProfile, Rating, VendorResearch]),
+    VendorClaimModule
   ],
   controllers: [VendorController],
   providers: [VendorService, VendorResearchService, VendorResearchQueue],
   exports: [VendorService, VendorResearchService]
 })
-export class VendorModule {}
+export class VendorModule { }
