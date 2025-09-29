@@ -263,7 +263,7 @@ export class VendorService {
   }
 
   async updateVendor(vendorId: number, updateData: any): Promise<Vendor> {
-    const vendor = await this.vendorRepository.findOne(vendorId, { populate: ['profile'] });
+    const vendor = await this.vendorRepository.findOne({ id: vendorId }, { populate: ['profile'] });
     if (!vendor) {
       throw new Error('Vendor not found');
     }

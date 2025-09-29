@@ -47,10 +47,7 @@ export class VendorClaimService {
   }
 
   async listClaims(currentUser: { userId: number; role: UserRole }): Promise<VendorClaim[]> {
-    this.logger.log('Listing claims', currentUser);
-
     if (currentUser.role === UserRole.ADMIN) {
-      this.logger.log('Listing all claims as admin');
       return this.vendorClaimRepository.find({}, {
         populate: ['vendor', 'user', 'reviewedBy'],
         orderBy: { submittedAt: 'DESC' },
@@ -58,7 +55,6 @@ export class VendorClaimService {
     }
 
     if (currentUser.role === UserRole.VENDOR) {
-      this.logger.log('Listing claims as vendor');
       const user = await this.userRepository.findOne(currentUser.userId, { populate: ['vendor'] });
       if (!user?.vendor) {
         throw new ForbiddenException('Vendor account not linked');

@@ -104,8 +104,6 @@ export class AnalyticsService {
 
     const growth = await this.buildMonthlyGrowth();
 
-    this.logger.log('claims', claims)
-
     const recentActivity = [
       ...demoRequests.map((request) => ({
         id: `demo-${request.id}`,
