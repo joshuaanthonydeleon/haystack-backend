@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityManager, EntityRepository } from '@mikro-orm/core';
 import { Vendor } from '../entities/vendor.entity';
@@ -45,6 +45,8 @@ export interface VendorSearchResponse {
 
 @Injectable()
 export class VendorService {
+  private readonly logger = new Logger(VendorService.name)
+
   constructor(
     @InjectRepository(Vendor)
     private vendorRepository: EntityRepository<Vendor>,
@@ -263,6 +265,8 @@ export class VendorService {
   }
 
   async updateVendor(vendorId: number, updateData: any): Promise<Vendor> {
+    this.logger.log('Updating vendor', vendorId, updateData);
+
     const vendor = await this.vendorRepository.findOne({ id: vendorId }, { populate: ['profile'] });
     if (!vendor) {
       throw new Error('Vendor not found');

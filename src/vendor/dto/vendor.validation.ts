@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { VerificationMethod } from '../../entities/vendor-claim.entity';
 
 // Enum schemas
-export const VerificationMethodSchema = z.nativeEnum(VerificationMethod);
+export const VerificationMethodSchema = z.enum(VerificationMethod);
 
 // Vendor claim schemas
 export const CreateVendorClaimSchema = z.object({

@@ -144,11 +144,12 @@ export class VendorController {
 
   @Put(':id')
   @Roles(UserRole.ADMIN, UserRole.VENDOR)
-  @UsePipes(new ZodValidationPipe(UpdateVendorSchema))
+  @UsePipes(new ZodValidationPipe(VendorIdParamSchema), new ZodValidationPipe(UpdateVendorSchema))
   async updateVendor(
     @Param() params: VendorIdParam,
     @Body() updateData: UpdateVendorDto
   ) {
+    console.log('Updating vendor', params);
     return this.vendorService.updateVendor(params.id, updateData);
   }
 
