@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { EntityManager, EntityRepository } from '@mikro-orm/core';
+import { EntityManager, EntityRepository, FilterQuery, QueryOrder } from '@mikro-orm/core';
 import { Vendor } from '../entities/vendor.entity';
-import { VendorProfile, VendorCategory, VendorSize, VerificationStatus } from '../entities/vendor-profile.entity';
+import { VendorProfile, VendorCategory, VendorSize, VendorStatus, VerificationStatus } from '../entities/vendor-profile.entity';
 import { Rating } from '../entities/rating.entity';
 import * as csv from 'csv-parser';
 import { Readable } from 'stream';
@@ -31,8 +31,9 @@ export interface VendorSearchParams {
   q?: string;
   category?: string;
   size?: string;
-  page: number;
-  limit: number;
+  status?: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface VendorSearchResponse {
@@ -40,6 +41,7 @@ export interface VendorSearchResponse {
   total: number;
   page: number;
   limit: number;
+  totalPages: number;
   hasMore: boolean;
 }
 
@@ -184,51 +186,69 @@ export class VendorService {
   }
 
   async searchVendors(params: VendorSearchParams): Promise<VendorSearchResponse> {
-    const { q, category, size, page, limit } = params;
-    const offset = (page - 1) * limit;
+    const {
+      q,
+      category,
+      size,
+      status,
+      page = 1,
+      limit = 10,
+    } = params;
 
-    const where: any = {};
+    const pageNumber = Math.max(1, page);
+    const pageSize = Math.min(Math.max(limit, 1), 200);
+    const offset = (pageNumber - 1) * pageSize;
 
-    if (category) {
-      where['profile.category'] = category;
-    }
+    const where: FilterQuery<Vendor> = {};
+    const andConditions: FilterQuery<Vendor>[] = [];
 
-    if (size) {
-      where['profile.size'] = size;
-    }
+    if (category || size || status) {
+      const profileQuery: FilterQuery<VendorProfile> = {};
 
-    const [vendors, total] = await this.vendorRepository.findAndCount(
-      where,
-      {
-        populate: ['profile', 'ratings'],
-        limit,
-        offset,
-        orderBy: { createdAt: 'DESC' }
+      if (category) {
+        profileQuery.category = category as VendorCategory;
       }
-    );
 
-    // If there's a search query, filter the results
-    let filteredVendors = vendors;
-    if (q) {
-      const query = q.toLowerCase();
-      filteredVendors = vendors.filter(vendor => {
-        const profile = vendor.profile;
-        if (!profile) return false;
+      if (size) {
+        profileQuery.size = size as VendorSize;
+      }
 
-        return (
-          vendor.companyName.toLowerCase().includes(query) ||
-          (profile.summary && profile.summary.toLowerCase().includes(query)) ||
-          (profile.tags && profile.tags.some(tag => tag.toLowerCase().includes(query)))
-        );
-      });
+      if (status) {
+        profileQuery.status = status as VendorStatus;
+      }
+
+      andConditions.push({ profile: profileQuery });
     }
+
+    if (q) {
+      const likeQuery = `%${q}%`;
+      const searchConditions: FilterQuery<Vendor>[] = [
+        { companyName: { $ilike: likeQuery } },
+        { website: { $ilike: likeQuery } },
+        { profile: { summary: { $ilike: likeQuery } } },
+        { profile: { detailedDescription: { $ilike: likeQuery } } },
+        { profile: { email: { $ilike: likeQuery } } },
+      ];
+
+      andConditions.push({ $or: searchConditions });
+    }
+
+    const [vendors, total] = await this.vendorRepository.findAndCount(andConditions.length ? { $and: andConditions } : where, {
+      populate: ['profile', 'ratings'],
+      limit: pageSize,
+      offset,
+      orderBy: { createdAt: QueryOrder.DESC },
+    });
+
+    const totalPages = total === 0 ? 0 : Math.ceil(total / pageSize);
 
     return {
-      vendors: filteredVendors,
-      total: filteredVendors.length,
-      page,
-      limit,
-      hasMore: offset + limit < total
+      vendors,
+      total,
+      page: pageNumber,
+      limit: pageSize,
+      totalPages,
+      hasMore: totalPages > 0 && pageNumber < totalPages,
     };
   }
 

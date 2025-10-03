@@ -12,7 +12,6 @@ import {
   UploadedFile,
   Req,
   Logger,
-  UsePipes,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { VendorService } from './vendor.service';
@@ -64,8 +63,11 @@ export class VendorController {
 
   @Post('verification-requests/:id/verify')
   @Roles(UserRole.ADMIN)
-  @UsePipes(new ZodValidationPipe(VendorIdParamSchema))
-  async verifyVendor(@Param() params: VendorIdParam) {
+  async verifyVendor(
+    @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
+  ) {
+    this.logger.log('VERIFYING VENDOR');
+
     return this.vendorService.verifyVendor(params.id);
   }
 
@@ -77,11 +79,10 @@ export class VendorController {
 
   @Post('claims/:claimId/decision')
   @Roles(UserRole.ADMIN)
-  @UsePipes(new ZodValidationPipe(DecideVendorClaimSchema))
   async decideClaim(
     @GetUser() user: UserDecorator,
-    @Param() params: ClaimIdParam,
-    @Body() body: DecideVendorClaimDto,
+    @Param(new ZodValidationPipe(ClaimIdParamSchema)) params: ClaimIdParam,
+    @Body(new ZodValidationPipe(DecideVendorClaimSchema)) body: DecideVendorClaimDto,
   ) {
     return this.vendorClaimService.decideClaim(user, params.claimId, body);
   }
@@ -119,44 +120,45 @@ export class VendorController {
 
   @Get('search')
   @Roles(UserRole.ADMIN, UserRole.VENDOR, UserRole.BANK)
-  @UsePipes(new ZodValidationPipe(VendorSearchSchema))
-  async searchVendors(@Query() searchParams: VendorSearchDto) {
+  async searchVendors(
+    @Query(new ZodValidationPipe(VendorSearchSchema)) searchParams: VendorSearchDto,
+  ) {
     return this.vendorService.searchVendors(searchParams);
   }
 
 
   @Get(':id/ratings')
   @Roles(UserRole.ADMIN, UserRole.VENDOR, UserRole.BANK)
-  @UsePipes(new ZodValidationPipe(VendorIdParamSchema))
-  async getVendorRatings(@Param() params: VendorIdParam) {
+  async getVendorRatings(
+    @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
+  ) {
     return this.vendorService.getVendorRatings(params.id);
   }
 
   @Post(':id/ratings')
   @Roles(UserRole.BANK)
-  @UsePipes(new ZodValidationPipe(CreateRatingSchema))
   async createRating(
-    @Param() params: VendorIdParam,
-    @Body() ratingData: CreateRatingDto
+    @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
+    @Body(new ZodValidationPipe(CreateRatingSchema)) ratingData: CreateRatingDto,
   ) {
     return this.vendorService.createRating(params.id, ratingData);
   }
 
   @Put(':id')
   @Roles(UserRole.ADMIN, UserRole.VENDOR)
-  @UsePipes(new ZodValidationPipe(VendorIdParamSchema), new ZodValidationPipe(UpdateVendorSchema))
   async updateVendor(
-    @Param() params: VendorIdParam,
-    @Body() updateData: UpdateVendorDto
+    @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
+    @Body(new ZodValidationPipe(UpdateVendorSchema)) updateData: UpdateVendorDto,
   ) {
-    console.log('Updating vendor', params);
+    this.logger.log('UPDATING VENDOR');
     return this.vendorService.updateVendor(params.id, updateData);
   }
 
   @Post(':id/research')
   @Roles(UserRole.ADMIN)
-  @UsePipes(new ZodValidationPipe(VendorIdParamSchema))
-  async requestVendorResearch(@Param() params: VendorIdParam) {
+  async requestVendorResearch(
+    @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
+  ) {
     const research = await this.vendorResearchService.createResearchRequest(params.id)
     await this.vendorResearchQueue.enqueue(research.id)
 
@@ -165,15 +167,17 @@ export class VendorController {
 
   @Get(':id/research')
   @Roles(UserRole.ADMIN)
-  @UsePipes(new ZodValidationPipe(VendorIdParamSchema))
-  async listVendorResearch(@Param() params: VendorIdParam) {
+  async listVendorResearch(
+    @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
+  ) {
     return this.vendorResearchService.listResearchForVendor(params.id)
   }
 
   @Get(':id/research/:researchId')
   @Roles(UserRole.ADMIN)
-  @UsePipes(new ZodValidationPipe(ResearchIdParamSchema))
-  async getVendorResearch(@Param() params: ResearchIdParam) {
+  async getVendorResearch(
+    @Param(new ZodValidationPipe(ResearchIdParamSchema)) params: ResearchIdParam,
+  ) {
     const research = await this.vendorResearchService.getResearchById(params.researchId)
     if (research.vendor.id !== params.id) {
       throw new BadRequestException('Research record does not belong to the requested vendor')
@@ -184,8 +188,9 @@ export class VendorController {
 
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.VENDOR, UserRole.BANK)
-  @UsePipes(new ZodValidationPipe(VendorIdParamSchema))
-  async getVendorById(@Param() params: VendorIdParam) {
+  async getVendorById(
+    @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
+  ) {
     const vendor = await this.vendorService.getVendorById(params.id);
     if (!vendor) {
       throw new BadRequestException('Vendor not found');
@@ -196,11 +201,10 @@ export class VendorController {
 
   @Post(':id/claims')
   @Roles(UserRole.VENDOR, UserRole.ADMIN)
-  @UsePipes(new ZodValidationPipe(CreateVendorClaimSchema))
   async submitClaim(
     @GetUser() user: UserDecorator,
-    @Param() params: VendorIdParam,
-    @Body() body: CreateVendorClaimDto,
+    @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
+    @Body(new ZodValidationPipe(CreateVendorClaimSchema)) body: CreateVendorClaimDto,
   ) {
     return this.vendorClaimService.submitClaim(user.userId, params.id, body);
   }
