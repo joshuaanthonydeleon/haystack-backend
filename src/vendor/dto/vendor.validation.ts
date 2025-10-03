@@ -1,5 +1,12 @@
 import { z } from 'zod';
 import { VerificationMethod } from '../../entities/vendor-claim.entity';
+import {
+  VendorCategory,
+  VendorSize,
+  VendorStatus,
+  VerificationStatus,
+  PricingModel,
+} from '../../entities/vendor-profile.entity';
 
 // Enum schemas
 export const VerificationMethodSchema = z.enum(VerificationMethod);
@@ -38,10 +45,43 @@ export const CreateRatingSchema = z.object({
 });
 
 // Vendor update schema
+const nullableString = z.union([z.string(), z.null()]);
+const nullableStringArray = z.union([z.array(z.string().min(1).max(200)), z.null()]);
+
 export const UpdateVendorSchema = z.object({
   companyName: z.string().min(1, 'Company name is required').max(200, 'Company name too long').optional(),
-  website: z.url('Invalid website URL').optional().or(z.literal('')),
+  website: z.union([z.string().url('Invalid website URL'), z.literal(''), z.null()]).optional(),
   isActive: z.boolean().optional(),
+
+  // Vendor profile fields
+  summary: nullableString.optional(),
+  detailedDescription: nullableString.optional(),
+  category: z.enum(VendorCategory).nullable().optional(),
+  size: z.enum(VendorSize).nullable().optional(),
+  location: nullableString.optional(),
+  founded: nullableString.optional(),
+  employees: nullableString.optional(),
+  phone: nullableString.optional(),
+  email: z.union([z.email('Invalid email format'), z.null()]).optional(),
+  logoUrl: z.union([z.url('Invalid logo URL'), z.null()]).optional(),
+  pricingModel: z.enum(PricingModel).nullable().optional(),
+  priceRange: nullableString.optional(),
+  status: z.enum(VendorStatus).nullable().optional(),
+  verificationStatus: z.enum(VerificationStatus).nullable().optional(),
+  tags: nullableStringArray.optional(),
+  features: nullableStringArray.optional(),
+  integrations: nullableStringArray.optional(),
+  targetCustomers: nullableStringArray.optional(),
+  pricingNotes: nullableString.optional(),
+  notes: nullableString.optional(),
+  searchHintsKeywords: nullableStringArray.optional(),
+  complianceCertifications: nullableStringArray.optional(),
+  integrationsCoreSupport: nullableStringArray.optional(),
+  digitalBankingPartners: nullableStringArray.optional(),
+  notableCustomers: nullableStringArray.optional(),
+  sourceUrl: z.union([z.url('Invalid source URL'), z.null()]).optional(),
+  confidence: z.union([z.number().min(0, 'Confidence must be at least 0').max(1, 'Confidence cannot exceed 1'), z.null()]).optional(),
+  lastVerified: z.union([z.iso.datetime(), z.date(), z.null()]).optional(),
 });
 
 // Parameter validation schemas

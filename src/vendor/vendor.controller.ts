@@ -66,8 +66,6 @@ export class VendorController {
   async verifyVendor(
     @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
   ) {
-    this.logger.log('VERIFYING VENDOR');
-
     return this.vendorService.verifyVendor(params.id);
   }
 
@@ -150,7 +148,6 @@ export class VendorController {
     @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
     @Body(new ZodValidationPipe(UpdateVendorSchema)) updateData: UpdateVendorDto,
   ) {
-    this.logger.log('UPDATING VENDOR');
     return this.vendorService.updateVendor(params.id, updateData);
   }
 

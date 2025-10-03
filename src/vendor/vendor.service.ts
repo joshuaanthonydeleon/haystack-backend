@@ -6,7 +6,7 @@ import { VendorProfile, VendorCategory, VendorSize, VendorStatus, VerificationSt
 import { Rating } from '../entities/rating.entity';
 import * as csv from 'csv-parser';
 import { Readable } from 'stream';
-import { VendorClaim } from 'src/entities/vendor-claim.entity';
+import { UpdateVendorDto } from './dto/vendor.validation';
 
 export interface CsvVendorData {
   Company: string;
@@ -284,38 +284,128 @@ export class VendorService {
     return rating;
   }
 
-  async updateVendor(vendorId: number, updateData: any): Promise<Vendor> {
-    this.logger.log('Updating vendor', vendorId, updateData);
+  async updateVendor(vendorId: number, updateData: UpdateVendorDto): Promise<Vendor> {
+    try {
+      this.logger.log('Updating vendor', vendorId, updateData)
 
-    const vendor = await this.vendorRepository.findOne({ id: vendorId }, { populate: ['profile'] });
-    if (!vendor) {
-      throw new Error('Vendor not found');
-    }
+      const vendor = await this.vendorRepository.findOne({ id: vendorId }, { populate: ['profile'] })
+      if (!vendor) {
+        throw new Error('Vendor not found')
+      }
 
-    // Update vendor basic info
-    if (updateData.companyName) {
-      vendor.companyName = updateData.companyName;
-    }
-    if (updateData.website) {
-      vendor.website = updateData.website;
-    }
-    if (updateData.isActive !== undefined) {
-      vendor.isActive = updateData.isActive;
-    }
+      // Update vendor basic info
+      if (updateData.companyName) {
+        vendor.companyName = updateData.companyName
+      }
 
-    // Update profile if it exists
-    if (vendor.profile) {
-      Object.keys(updateData).forEach(key => {
-        if (key in vendor.profile! && updateData[key] !== undefined) {
-          (vendor.profile as any)[key] = updateData[key];
-        }
-      });
+      if (updateData.website) {
+        const website = updateData.website
+        vendor.website = website === null || website === '' ? undefined : website
+      }
+
+      if (updateData.isActive) {
+        vendor.isActive = updateData.isActive
+      }
+
+      // Ensure vendor profile exists when profile fields are provided
+      const profileFieldKeys = [
+        'summary',
+        'detailedDescription',
+        'category',
+        'size',
+        'location',
+        'founded',
+        'employees',
+        'phone',
+        'email',
+        'logoUrl',
+        'pricingModel',
+        'priceRange',
+        'status',
+        'verificationStatus',
+        'tags',
+        'features',
+        'integrations',
+        'targetCustomers',
+        'pricingNotes',
+        'notes',
+        'searchHintsKeywords',
+        'complianceCertifications',
+        'integrationsCoreSupport',
+        'digitalBankingPartners',
+        'notableCustomers',
+        'sourceUrl',
+        'confidence',
+        'lastVerified',
+      ]
+
+      const hasProfileUpdates = profileFieldKeys.some((key) => key in updateData)
+
+      if (hasProfileUpdates && !vendor.profile) {
+        const profile = new VendorProfile()
+        profile.vendor = vendor
+        vendor.profile = profile
+        this.em.persist(profile)
+      }
+
+      if (vendor.profile && hasProfileUpdates) {
+        const profile = vendor.profile
+
+        profileFieldKeys.forEach((key) => {
+          if (!(key in updateData)) {
+            return
+          }
+
+          const value = updateData[key]
+
+          // Skip null updates for non-nullable fields
+          if ((key === 'status' || key === 'verificationStatus') && value === null) {
+            return
+          }
+
+          if (key === 'lastVerified' && value !== undefined) {
+            profile.lastVerified = value === null ? undefined : new Date(value)
+            return
+          }
+
+          if (key === 'confidence' && value !== undefined) {
+            profile.confidence = value === null ? null : value
+            return
+          }
+
+          // Handle nullable string fields to ensure empty strings become null
+          if (
+            [
+              'summary',
+              'detailedDescription',
+              'location',
+              'founded',
+              'employees',
+              'phone',
+              'email',
+              'logoUrl',
+              'priceRange',
+              'pricingNotes',
+              'notes',
+              'sourceUrl',
+            ].includes(key)
+          ) {
+            ; (profile as any)[key] = value === null || value === '' ? null : value
+            return
+          }
+
+          ; (profile as any)[key] = value
+        })
+      }
+
+      this.em.persist(vendor)
+      await this.em.flush()
+
+      return vendor
+    } catch (error) {
+      this.logger.error('Error updating vendor', error)
+      throw error
     }
-
-    this.em.persist(vendor);
-    await this.em.flush();
-
-    return vendor;
   }
 
   async listVerificationRequests(): Promise<Vendor[]> {
