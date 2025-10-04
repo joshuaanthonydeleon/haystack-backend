@@ -47,16 +47,10 @@ export class AnalyticsService {
     return Number((((current - previous) / previous) * 100).toFixed(1));
   }
 
-  private async buildMonthlyGrowth(): Promise<GrowthMetrics> {
+  private async buildMonthlyGrowth(vendors: Vendor[], demos: DemoRequest[], banks: User[]): Promise<GrowthMetrics> {
     const now = new Date();
     const last30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const prev30 = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-
-    const [vendors, banks, demos] = await Promise.all([
-      this.vendorRepository.findAll(),
-      this.userRepository.find({ role: UserRole.BANK }),
-      this.demoRequestRepository.findAll(),
-    ]);
 
     const [vendorCount, bankCount, demoCount] = [vendors, banks, demos].map((items) =>
       items.filter((item: any) => item.createdAt instanceof Date && item.createdAt >= last30).length,
@@ -102,7 +96,7 @@ export class AnalyticsService {
       .slice(0, 3)
       .map(([category, count]) => ({ category, count, growth: 0 }));
 
-    const growth = await this.buildMonthlyGrowth();
+    const growth = await this.buildMonthlyGrowth(vendors, demoRequests, banks);
 
     const recentActivity = [
       ...demoRequests.map((request) => ({
