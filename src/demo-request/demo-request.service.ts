@@ -4,8 +4,8 @@ import { EntityManager, EntityRepository } from '@mikro-orm/core';
 import { DemoRequest, DemoRequestStatus } from '../entities/demo-request.entity';
 import { Vendor } from '../entities/vendor.entity';
 import { User, UserRole } from '../entities/user.entity';
-import { CreateDemoRequestDto } from './dto/create-demo-request.dto';
 import { UpdateDemoRequestStatusDto } from './dto/update-demo-request-status.dto';
+import { CreateDemoRequestDto } from './validations/demo-request.validations';
 
 @Injectable()
 export class DemoRequestService {
@@ -17,15 +17,15 @@ export class DemoRequestService {
     @InjectRepository(User)
     private readonly userRepository: EntityRepository<User>,
     private readonly em: EntityManager,
-  ) {}
+  ) { }
 
-  async create(requesterId: number, dto: CreateDemoRequestDto): Promise<DemoRequest> {
-    const vendor = await this.vendorRepository.findOne(dto.vendorId);
+  async create(vendorId: number, dto: CreateDemoRequestDto): Promise<DemoRequest> {
+    const vendor = await this.vendorRepository.findOne(vendorId);
     if (!vendor) {
       throw new NotFoundException('Vendor not found');
     }
 
-    const requester = await this.userRepository.findOne(requesterId);
+    const requester = await this.userRepository.findOne(dto.userId);
     if (!requester) {
       throw new NotFoundException('Requester not found');
     }
@@ -33,57 +33,18 @@ export class DemoRequestService {
     const demoRequest = new DemoRequest();
     demoRequest.vendor = vendor;
     demoRequest.requester = requester;
-    demoRequest.firstName = dto.firstName;
-    demoRequest.lastName = dto.lastName;
-    demoRequest.email = dto.email;
-    demoRequest.phone = dto.phone;
-    demoRequest.bankName = dto.bankName;
-    demoRequest.title = dto.title;
-    demoRequest.assetsUnderManagement = dto.assetsUnderManagement;
-    demoRequest.currentProvider = dto.currentProvider;
     demoRequest.timeline = dto.timeline;
     demoRequest.preferredTime = dto.preferredTime;
     demoRequest.message = dto.message;
-    demoRequest.status = dto.status ?? DemoRequestStatus.PENDING;
-    demoRequest.scheduledAt = dto.scheduledAt;
-    demoRequest.completedAt = dto.completedAt;
+
 
     await this.em.persistAndFlush(demoRequest);
     return demoRequest;
   }
 
-  private async findUserWithVendor(userId: number): Promise<User | null> {
-    return this.userRepository.findOne(userId, { populate: ['vendor'] });
-  }
-
-  async listForUser(user: { userId: number; role: UserRole }, vendorId?: number): Promise<DemoRequest[]> {
-    if (user.role === UserRole.ADMIN) {
-      return this.findAll(vendorId);
-    }
-
-    if (user.role === UserRole.VENDOR) {
-      const userEntity = await this.findUserWithVendor(user.userId);
-      if (!userEntity?.vendor) {
-        throw new ForbiddenException('Vendor account not linked');
-      }
-
-      const requestedVendorId = vendorId ?? userEntity.vendor.id;
-      if (requestedVendorId !== userEntity.vendor.id) {
-        throw new ForbiddenException('Cannot access demo requests for another vendor');
-      }
-
-      return this.findAll(userEntity.vendor.id);
-    }
-
-    throw new ForbiddenException('Access denied');
-  }
-
-  private async findAll(vendorId?: number): Promise<DemoRequest[]> {
-    const where = vendorId ? { vendor: vendorId } : {};
-    return this.demoRequestRepository.find(where, {
-      populate: ['vendor', 'requester'],
-      orderBy: { createdAt: 'DESC' },
-    });
+  async listForUser(user: { userId: number }, vendorId?: number): Promise<DemoRequest[]> {
+    const userEntity = await this.userRepository.findOneOrFail({ id: user.userId, vendor: vendorId }, { populate: ['demoRequests'] })
+    return userEntity!.demoRequests ?? [];
   }
 
   async ensureCanAccess(requestId: number, user: { userId: number; role: UserRole }): Promise<DemoRequest> {

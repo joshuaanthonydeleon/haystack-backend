@@ -4,37 +4,28 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../entities/user.entity';
-import { CreateDemoRequestDto } from './dto/create-demo-request.dto';
 import { UpdateDemoRequestStatusDto } from './dto/update-demo-request-status.dto';
+import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
+import { CreateDemoRequestSchema, CreateDemoRequestDto, DemoRequestIdParamSchema, DemoRequestIdParam } from './validations/demo-request.validations';
 
 @Controller('demo-requests')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class DemoRequestController {
-  constructor(private readonly demoRequestService: DemoRequestService) {}
+  constructor(private readonly demoRequestService: DemoRequestService) { }
 
-  @Post()
+  @Post('/:vendorId')
   @Roles(UserRole.BANK, UserRole.ADMIN)
-  async create(@Req() req: any, @Body() body: CreateDemoRequestDto) {
-    body.vendorId = Number(body.vendorId);
-    if (!body.vendorId || Number.isNaN(body.vendorId)) {
-      throw new BadRequestException('Invalid vendorId');
-    }
-
-    return this.demoRequestService.create(req.user.userId, body);
+  async create(
+    @Param(new ZodValidationPipe(DemoRequestIdParamSchema)) { vendorId }: DemoRequestIdParam,
+    @Body(new ZodValidationPipe(CreateDemoRequestSchema)) body: CreateDemoRequestDto,
+  ) {
+    return this.demoRequestService.create(vendorId, body);
   }
 
-  @Get()
+  @Get('/:vendorId')
   @Roles(UserRole.ADMIN, UserRole.VENDOR)
-  async list(@Req() req: any, @Query('vendorId') vendorId?: string) {
-    let parsedVendorId: number | undefined = undefined;
-    if (vendorId) {
-      parsedVendorId = parseInt(vendorId, 10);
-      if (Number.isNaN(parsedVendorId)) {
-        throw new BadRequestException('Invalid vendorId');
-      }
-    }
-
-    return this.demoRequestService.listForUser(req.user, parsedVendorId);
+  async list(@Param(new ZodValidationPipe(DemoRequestIdParamSchema)) { vendorId }: DemoRequestIdParam) {
+    return this.demoRequestService.listForUser(vendorId);
   }
 
   @Patch(':id/status')

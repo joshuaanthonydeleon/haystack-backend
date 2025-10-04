@@ -28,6 +28,8 @@ import {
   UpdateVendorSchema,
   VendorClaimIdParamSchema,
   VendorClaimIdParam,
+  CreateVendorSchema,
+  CreateVendorDto,
 } from './dto/vendor.validation';
 import { GetUser, UserDecorator } from 'src/common/decorators/user.decorator';
 import { VendorService } from './vendor.service';
@@ -84,12 +86,11 @@ export class VendorController {
     return this.vendorService.getVendorById(vendorId);
   }
 
-  // TODO:
-  // @Post()
-  // @Roles(UserRole.ADMIN)
-  // async createVendor(@Body(new ZodValidationPipe(CreateVendorSchema)) body: CreateVendorDto) {
-  //   return this.vendorService.createVendor(body);
-  // }
+  @Post()
+  @Roles(UserRole.ADMIN)
+  async createVendor(@Body(new ZodValidationPipe(CreateVendorSchema)) body: CreateVendorDto) {
+    return this.vendorService.createVendor(body);
+  }
 
   @Put(':vendorId')
   @Roles(UserRole.ADMIN)
