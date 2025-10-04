@@ -26,11 +26,13 @@ import {
   VendorSearchParams,
   UpdateVendorDto,
   UpdateVendorSchema,
+  VendorClaimIdParamSchema,
+  VendorClaimIdParam,
 } from './dto/vendor.validation';
 import { GetUser, UserDecorator } from 'src/common/decorators/user.decorator';
 import { VendorService } from './vendor.service';
 import { VendorResearchService } from './vendor-research.service';
-import { ResearchIdParamSchema } from 'src/research/dto/research.dto';
+import { ResearchIdParam, ResearchIdParamSchema } from 'src/research/dto/research.dto';
 
 @Controller('vendors')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -50,14 +52,22 @@ export class VendorController {
     return this.vendorClaimService.listClaims(req.user);
   }
 
-  @Post(':id/claims')
+  @Post(':vendorId/claims')
   @Roles(UserRole.VENDOR, UserRole.ADMIN)
   async submitClaim(
     @GetUser() user: UserDecorator,
-    @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
+    @Param(new ZodValidationPipe(VendorIdParamSchema)) { vendorId }: VendorIdParam,
     @Body(new ZodValidationPipe(CreateVendorClaimSchema)) body: CreateVendorClaimDto,
   ) {
-    return this.vendorClaimService.submitClaim(user.userId, params.id, body);
+    return this.vendorClaimService.submitClaim(user.userId, vendorId, body);
+  }
+
+  @Get(':vendorId/claims/:claimId')
+  @Roles(UserRole.ADMIN, UserRole.VENDOR)
+  async getVendorClaim(
+    @Param(new ZodValidationPipe(VendorClaimIdParamSchema)) { vendorId, claimId }: VendorClaimIdParam,
+  ) {
+    return this.vendorClaimService.getVendorClaimById(vendorId, claimId);
   }
 
   @Get('search')
@@ -68,10 +78,10 @@ export class VendorController {
     return this.vendorService.searchVendors(params);
   }
 
-  @Get(':id')
+  @Get(':vendorId')
   @Roles(UserRole.ADMIN, UserRole.VENDOR)
-  async getVendor(@Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam) {
-    return this.vendorService.getVendorById(params.id);
+  async getVendor(@Param(new ZodValidationPipe(VendorIdParamSchema)) { vendorId }: VendorIdParam) {
+    return this.vendorService.getVendorById(vendorId);
   }
 
   // TODO:
@@ -81,37 +91,36 @@ export class VendorController {
   //   return this.vendorService.createVendor(body);
   // }
 
-  @Put(':id')
+  @Put(':vendorId')
   @Roles(UserRole.ADMIN)
   async updateVendor(
-    @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
+    @Param(new ZodValidationPipe(VendorIdParamSchema)) { vendorId }: VendorIdParam,
     @Body(new ZodValidationPipe(UpdateVendorSchema)) body: UpdateVendorDto,
   ) {
-    return this.vendorService.updateVendor(params.id, body);
+    return this.vendorService.updateVendor(vendorId, body);
   }
 
-  @Post(':id/research')
+  @Post(':vendorId/research')
   @Roles(UserRole.ADMIN)
   async requestVendorResearch(
-    @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
+    @Param(new ZodValidationPipe(VendorIdParamSchema)) { vendorId }: VendorIdParam,
   ) {
-    return this.vendorResearchService.createResearchRequest(params.id);
+    return this.vendorResearchService.createResearchRequest(vendorId);
   }
 
-  @Get(':id/research')
+  @Get(':vendorId/research')
   @Roles(UserRole.ADMIN)
   async listVendorResearch(
-    @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
+    @Param(new ZodValidationPipe(VendorIdParamSchema)) { vendorId }: VendorIdParam,
   ) {
-    return this.vendorResearchService.listResearchForVendor(params.id);
+    return this.vendorResearchService.listResearchForVendor(vendorId);
   }
 
-  @Get(':id/research/:researchId')
+  @Get(':vendorId/research/:researchId')
   @Roles(UserRole.ADMIN)
   async getVendorResearch(
-    @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
-    @Param(new ZodValidationPipe(ResearchIdParamSchema)) researchId: number,
+    @Param(new ZodValidationPipe(ResearchIdParamSchema)) { vendorId, researchId }: ResearchIdParam,
   ) {
-    return this.vendorResearchService.getResearchById(params.id, researchId);
+    return this.vendorResearchService.getResearchById(vendorId, researchId);
   }
 }

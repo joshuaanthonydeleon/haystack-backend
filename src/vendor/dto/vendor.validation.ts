@@ -19,7 +19,7 @@ export const CreateVendorClaimSchema = z.object({
 
 // Parameter validation schemas
 export const VendorIdParamSchema = z.object({
-  id: z.coerce.number().int().positive('Invalid vendor ID'),
+  vendorId: z.coerce.number().int().positive('Invalid vendor ID'),
 });
 
 export const CreateVendorSchema = z.object({
@@ -69,6 +69,10 @@ export const VendorSearchParamsSchema = z.object({
   limit: z.coerce.number().int().positive('Invalid limit').max(100, 'Limit cannot exceed 100').optional(),
 });
 
+export const VendorClaimIdParamSchema = z.object({
+  vendorId: z.coerce.number().int().positive('Invalid vendor ID'),
+  claimId: z.coerce.number().int().positive('Invalid claim ID'),
+});
 
 // Type exports for TypeScript
 export type CreateVendorClaimDto = z.infer<typeof CreateVendorClaimSchema>;
@@ -76,3 +80,4 @@ export type VendorIdParam = z.infer<typeof VendorIdParamSchema>;
 export type UpdateVendorDto = z.infer<typeof UpdateVendorSchema>;
 export type VendorSearchParams = z.infer<typeof VendorSearchParamsSchema>;
 export type CreateVendorDto = z.infer<typeof CreateVendorSchema>;
+export type VendorClaimIdParam = z.infer<typeof VendorClaimIdParamSchema>;

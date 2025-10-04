@@ -246,10 +246,7 @@ export class VendorService {
 
   async updateVendor(vendorId: number, updateData: UpdateVendorDto): Promise<Vendor> {
     try {
-      const vendor = await this.vendorRepository.findOne({ id: vendorId }, { populate: ['profile'] })
-      if (!vendor) {
-        throw new Error('Vendor not found')
-      }
+      const vendor = await this.vendorRepository.findOneOrFail({ id: vendorId }, { populate: ['profile'] })
 
       // Update vendor basic info
       if (updateData.companyName) {
@@ -316,7 +313,7 @@ export class VendorService {
 
           const value = updateData[key]
 
-          // Skip null updates for non-nullable fields
+          // Skip null updates for non-nullable field
           if ((key === 'status' || key === 'verificationStatus') && value === null) {
             return
           }
@@ -370,12 +367,9 @@ export class VendorService {
   }
 
   async verifyVendor(id: number): Promise<Vendor> {
-    const vendor = await this.vendorRepository.findOne(id, { populate: ['profile'] });
-    if (!vendor || !vendor.profile) {
-      throw new Error('Vendor not found');
-    }
+    const vendor = await this.vendorRepository.findOneOrFail(id, { populate: ['profile'] });
 
-    vendor.profile.verificationStatus = VerificationStatus.VERIFIED;
+    vendor.profile!.verificationStatus = VerificationStatus.VERIFIED;
     await this.em.persistAndFlush(vendor);
 
     return vendor;

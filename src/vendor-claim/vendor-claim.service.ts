@@ -100,4 +100,8 @@ export class VendorClaimService {
     await this.em.flush();
     return claim;
   }
+
+  async getVendorClaimById(vendorId: number, claimId: number): Promise<VendorClaim | null> {
+    return this.vendorClaimRepository.findOneOrFail({ id: claimId, vendor: vendorId }, { populate: ['vendor', 'user', 'reviewedBy'] });
+  }
 }
