@@ -107,11 +107,16 @@ export class VendorResearchService {
   }
 
   // Retrieves a single research record including vendor context for deep inspection.
-  async getResearchById(researchId: number): Promise<VendorResearch> {
-    const research = await this.vendorResearchRepository.findOne(researchId, { populate: ['vendor', 'vendor.profile'] })
+  async getResearchById(vendorId: number, researchId: number): Promise<VendorResearch | null> {
+    const research = await this.vendorResearchRepository.findOne(
+      { id: researchId, vendor: vendorId },
+      { populate: ['vendor', 'vendor.profile'] },
+    )
+
     if (!research) {
       throw new NotFoundException('Research request not found')
     }
+
     return research
   }
 

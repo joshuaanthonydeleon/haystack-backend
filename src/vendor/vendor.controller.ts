@@ -7,6 +7,9 @@ import {
   UseGuards,
   Req,
   Logger,
+  Query,
+  Put,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -19,16 +22,25 @@ import {
   VendorIdParamSchema,
   CreateVendorClaimDto,
   VendorIdParam,
+  VendorSearchParamsSchema,
+  VendorSearchParams,
+  UpdateVendorDto,
+  UpdateVendorSchema,
 } from './dto/vendor.validation';
 import { GetUser, UserDecorator } from 'src/common/decorators/user.decorator';
+import { VendorService } from './vendor.service';
+import { VendorResearchService } from './vendor-research.service';
+import { ResearchIdParamSchema } from 'src/research/dto/research.dto';
 
-@Controller('vendor')
+@Controller('vendors')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class VendorController {
   private readonly logger: Logger = new Logger(VendorController.name);
 
   constructor(
     private readonly vendorClaimService: VendorClaimService,
+    private readonly vendorService: VendorService,
+    private readonly vendorResearchService: VendorResearchService,
   ) { }
 
 
@@ -38,9 +50,6 @@ export class VendorController {
     return this.vendorClaimService.listClaims(req.user);
   }
 
-
-
-
   @Post(':id/claims')
   @Roles(UserRole.VENDOR, UserRole.ADMIN)
   async submitClaim(
@@ -49,5 +58,60 @@ export class VendorController {
     @Body(new ZodValidationPipe(CreateVendorClaimSchema)) body: CreateVendorClaimDto,
   ) {
     return this.vendorClaimService.submitClaim(user.userId, params.id, body);
+  }
+
+  @Get('search')
+  @Roles(UserRole.ADMIN, UserRole.VENDOR)
+  async searchVendors(
+    @Query(new ZodValidationPipe(VendorSearchParamsSchema)) params: VendorSearchParams,
+  ) {
+    return this.vendorService.searchVendors(params);
+  }
+
+  @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.VENDOR)
+  async getVendor(@Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam) {
+    return this.vendorService.getVendorById(params.id);
+  }
+
+  // TODO:
+  // @Post()
+  // @Roles(UserRole.ADMIN)
+  // async createVendor(@Body(new ZodValidationPipe(CreateVendorSchema)) body: CreateVendorDto) {
+  //   return this.vendorService.createVendor(body);
+  // }
+
+  @Put(':id')
+  @Roles(UserRole.ADMIN)
+  async updateVendor(
+    @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
+    @Body(new ZodValidationPipe(UpdateVendorSchema)) body: UpdateVendorDto,
+  ) {
+    return this.vendorService.updateVendor(params.id, body);
+  }
+
+  @Post(':id/research')
+  @Roles(UserRole.ADMIN)
+  async requestVendorResearch(
+    @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
+  ) {
+    return this.vendorResearchService.createResearchRequest(params.id);
+  }
+
+  @Get(':id/research')
+  @Roles(UserRole.ADMIN)
+  async listVendorResearch(
+    @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
+  ) {
+    return this.vendorResearchService.listResearchForVendor(params.id);
+  }
+
+  @Get(':id/research/:researchId')
+  @Roles(UserRole.ADMIN)
+  async getVendorResearch(
+    @Param(new ZodValidationPipe(VendorIdParamSchema)) params: VendorIdParam,
+    @Param(new ZodValidationPipe(ResearchIdParamSchema)) researchId: number,
+  ) {
+    return this.vendorResearchService.getResearchById(params.id, researchId);
   }
 }

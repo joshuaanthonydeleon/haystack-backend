@@ -19,15 +19,6 @@ export interface CsvVendorData {
   Notes: string;
 }
 
-export interface VendorSearchParams {
-  q?: string;
-  category?: string;
-  size?: string;
-  status?: string;
-  page?: number;
-  limit?: number;
-}
-
 export interface VendorSearchResponse {
   vendors: Vendor[];
   total: number;

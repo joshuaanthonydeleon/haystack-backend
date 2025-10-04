@@ -6,8 +6,9 @@ import { VendorProfile, VendorCategory, VendorSize, VendorStatus, VerificationSt
 import { Rating } from '../entities/rating.entity';
 import * as csv from 'csv-parser';
 import { Readable } from 'stream';
-import { UpdateVendorDto } from './dto/vendor.validation';
-import { CsvVendorData, VendorSearchParams, VendorSearchResponse } from './types';
+import { CreateVendorDto, UpdateVendorDto } from './dto/vendor.validation';
+import { CsvVendorData, VendorSearchResponse } from './types';
+import { VendorSearchParams } from './dto/vendor.validation';
 @Injectable()
 export class VendorService {
   private readonly logger = new Logger(VendorService.name)
@@ -375,6 +376,46 @@ export class VendorService {
     }
 
     vendor.profile.verificationStatus = VerificationStatus.VERIFIED;
+    await this.em.persistAndFlush(vendor);
+
+    return vendor;
+  }
+
+  async createVendor(createData: CreateVendorDto): Promise<Vendor> {
+    const vendor = new Vendor();
+    vendor.companyName = createData.companyName;
+    vendor.website = createData.website;
+    vendor.isActive = createData.isActive;
+
+    const profile = new VendorProfile();
+    profile.vendor = vendor;
+    profile.summary = createData.summary;
+    profile.detailedDescription = createData.detailedDescription;
+    profile.category = createData.category;
+    profile.size = createData.size;
+    profile.location = createData.location;
+    profile.founded = createData.founded;
+    profile.employees = createData.employees;
+    profile.phone = createData.phone;
+    profile.email = createData.email;
+    profile.logoUrl = createData.logoUrl;
+    profile.pricingModel = createData.pricingModel;
+    profile.priceRange = createData.priceRange;
+    profile.status = createData.status;
+    profile.verificationStatus = createData.verificationStatus;
+    profile.tags = createData.tags;
+    profile.features = createData.features;
+    profile.integrations = createData.integrations;
+    profile.targetCustomers = createData.targetCustomers;
+    profile.pricingNotes = createData.pricingNotes;
+    profile.notes = createData.notes;
+    profile.searchHintsKeywords = createData.searchHintsKeywords;
+    profile.complianceCertifications = createData.complianceCertifications;
+    profile.integrationsCoreSupport = createData.integrationsCoreSupport;
+    profile.digitalBankingPartners = createData.digitalBankingPartners;
+    profile.notableCustomers = createData.notableCustomers;
+    profile.sourceUrl = createData.sourceUrl;
+
     await this.em.persistAndFlush(vendor);
 
     return vendor;
