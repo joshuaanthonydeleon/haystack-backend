@@ -17,6 +17,6 @@ import { VendorClaimModule } from 'src/vendor-claim/vendor-claim.module';
   ],
   controllers: [VendorController],
   providers: [VendorService, VendorResearchService, VendorResearchQueue],
-  exports: [VendorService, VendorResearchService]
+  exports: [VendorService, VendorResearchService, VendorResearchQueue]
 })
 export class VendorModule { }

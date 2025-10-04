@@ -7,44 +7,7 @@ import { Rating } from '../entities/rating.entity';
 import * as csv from 'csv-parser';
 import { Readable } from 'stream';
 import { UpdateVendorDto } from './dto/vendor.validation';
-
-export interface CsvVendorData {
-  Company: string;
-  'Official Website': string;
-  Summary: string;
-  'Detailed Description': string;
-  Categories: string;
-  'Target Customers': string;
-  'Search Hints/Keywords': string;
-  'Compliance/Certifications': string;
-  'Integrations/Core Support': string;
-  'Digital Banking Partners': string;
-  'Notable Customers (Public)': string;
-  'Pricing Notes': string;
-  'Source Used (URL)': string;
-  'Confidence (0-1)': string;
-  'Last Verified (UTC)': string;
-  Notes: string;
-}
-
-export interface VendorSearchParams {
-  q?: string;
-  category?: string;
-  size?: string;
-  status?: string;
-  page?: number;
-  limit?: number;
-}
-
-export interface VendorSearchResponse {
-  vendors: Vendor[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-  hasMore: boolean;
-}
-
+import { CsvVendorData, VendorSearchParams, VendorSearchResponse } from './types';
 @Injectable()
 export class VendorService {
   private readonly logger = new Logger(VendorService.name)
@@ -144,10 +107,7 @@ export class VendorService {
     profile.notes = data.Notes || undefined;
 
     // Persist profile (create or update)
-    this.em.persist(profile);
-
-    // Flush all changes at once
-    await this.em.flush();
+    await this.em.persistAndFlush(profile);
   }
 
   private mapCategory(categoryString: string): VendorCategory | undefined {
@@ -278,16 +238,13 @@ export class VendorService {
     rating.reviewer = ratingData.reviewer;
     rating.reviewerTitle = ratingData.reviewerTitle;
 
-    this.em.persist(rating);
-    await this.em.flush();
+    await this.em.persistAndFlush(rating);
 
     return rating;
   }
 
   async updateVendor(vendorId: number, updateData: UpdateVendorDto): Promise<Vendor> {
     try {
-      this.logger.log('Updating vendor', vendorId, updateData)
-
       const vendor = await this.vendorRepository.findOne({ id: vendorId }, { populate: ['profile'] })
       if (!vendor) {
         throw new Error('Vendor not found')
@@ -398,8 +355,7 @@ export class VendorService {
         })
       }
 
-      this.em.persist(vendor)
-      await this.em.flush()
+      await this.em.persistAndFlush(vendor)
 
       return vendor
     } catch (error) {

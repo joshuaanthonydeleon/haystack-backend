@@ -7,6 +7,9 @@ import { ComplianceModule } from './compliance/compliance.module';
 import { VendorClaimModule } from './vendor-claim/vendor-claim.module';
 import { NotificationModule } from './notification/notification.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { AdminModule } from './admin/admin.module';
+import { RatingsModule } from './ratings/ratings.module';
+import { ResearchModule } from './research/research.module';
 import mikroConfig from 'mikro.config';
 
 @Module({
@@ -19,6 +22,9 @@ import mikroConfig from 'mikro.config';
     VendorClaimModule,
     NotificationModule,
     AnalyticsModule,
+    AdminModule,
+    RatingsModule,
+    ResearchModule,
   ],
 })
 export class AppModule { }
